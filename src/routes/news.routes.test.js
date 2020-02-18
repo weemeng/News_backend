@@ -1,18 +1,11 @@
 const request = require("supertest");
 const app = require("../app");
+const { basicResponse, mockArticleList } = require("../utils/initdata");
 const {
-  basicResponse,
-  mockUser,
-  mockQuery,
-  mockFirstCommentinFirstArticle,
-  mockFirstArticle,
-  mockSecondArticle,
-  mockThirdArticle,
-  mockArticleList,
-  mockArticleFullMessage
-} = require("../utils/initdata");
+  mongooseBeforeAll,
+  mongooseTearDown
+} = require("../utils/mongooseTest");
 const mongoose = require("mongoose");
-const { MongoMemoryServer } = require("mongodb-memory-server");
 const NewsModel = require("../model/news.model");
 
 mongoose.set("useNewUrlParser", true);
@@ -23,17 +16,10 @@ mongoose.set("useUnifiedTopology", true);
 describe("app", () => {
   let mongoServer;
   beforeAll(async () => {
-    try {
-      mongoServer = new MongoMemoryServer();
-      const mongoUri = await mongoServer.getConnectionString();
-      await mongoose.connect(mongoUri);
-    } catch (err) {
-      console.error(err);
-    }
+    mongoServer = await mongooseBeforeAll();
   });
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await mongooseTearDown(mongoServer);
   });
   beforeEach(async () => {
     await NewsModel.create(mockArticleList);
@@ -46,7 +32,7 @@ describe("app", () => {
     await NewsModel.deleteMany();
   });
 
-  it("CHECK TEST (one should be one and not anything else)", () => {
+  it.only("CHECK TEST (one should be one and not anything else)", () => {
     expect(1).toBe(1);
   });
   it("GET / return all path links", async () => {
@@ -95,13 +81,29 @@ describe("app", () => {
       // "/news?(country=|tag=|headline=|earliestDate=|latestDate="
       expect(response.body).toMatchObject([expectedResponse]);
     });
-    it.only("GET /news/:id/comments", async () => {
+    it("GET /news/:id/comments", async () => {
       const expectedResponse = mockArticleList[0];
       const agent = request(app);
       const response = await agent
         .get(`/news/${expectedResponse.id}/comments`)
         .expect(200);
       expect(response.body).toMatchObject(expectedResponse.comments);
+    });
+    it("POST /news/:id/comments", async () => {
+      const mockComment = {
+        userId: `bf6aa598-c9aa-40aa-a3a4-0984c2f1df80`,
+        title: "Im done reading this",
+        comment: `This is a comment`
+      };
+      const expectedResponse = mockArticleList[0];
+      const agent = request(app);
+      const { body: actualResponse } = await agent
+        .post(`/news/${expectedResponse.id}/comments`)
+        .send(mockComment)
+        .expect(201);
+      expect(actualResponse[actualResponse.length - 1]).toEqual(
+        expect.objectContaining(mockComment)
+      );
     });
   });
 });

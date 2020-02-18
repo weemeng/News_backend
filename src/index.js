@@ -1,19 +1,12 @@
-const PORT = 3000;
+require("dotenv").config();
+const port = process.env.PORT || 3000;
 const app = require("./app");
 require("./utils/db");
 const NewsModel = require("./model/news.model");
-const {
-  basicResponse,
-  mockUser,
-  mockQuery,
-  mockFirstArticle,
-  mockSecondArticle,
-  mockThirdArticle,
-  mockArticleList,
-  mockArticleFullMessage
-} = require("./utils/initdata");
+const UserModel = require("./model/user.model");
+const { mockUserList, mockArticleList } = require("./utils/initdata");
 
-const populateFirstArticle = async article => {
+const populateArticleList = async article => {
   try {
     await NewsModel.create(article);
   } catch (err) {
@@ -21,10 +14,19 @@ const populateFirstArticle = async article => {
   }
 };
 
-populateFirstArticle(mockArticleList).then(
+const populateUserList = async user => {
+  try {
+    await UserModel.create(user);
+  } catch (err) {
+    // console.log(err);
+  }
+};
+
+populateArticleList(mockArticleList).then(
   console.log("populated the First article")
 );
+populateUserList(mockUserList).then(console.log("Lock and Load"));
 
-const server = app.listen(PORT, () => {
-  console.log(`Server is now running at http://localhost:${PORT}`);
+const server = app.listen(port, () => {
+  console.log(`Server is now running at http://localhost:${port}`);
 });

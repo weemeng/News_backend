@@ -5,14 +5,21 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --watchAll",
-    "start:db" : "mongod --dbpath ~/Developer/mongodB/data/db",
+    "jestleak": "jest --runInBand --detectOpenHandles",
+    "jestuser": "jest --watch -t user",
+    "start:db": "mongod --dbpath ~/Developer/mongodB/data/db",
     "start": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.4",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "lorem-ipsum": "^2.0.3",
     "mongoose": "^5.9.1",
     "nodemon": "^2.0.2",
@@ -22,5 +29,8 @@
     "jest": "^25.1.0",
     "mongodb-memory-server": "^6.2.4",
     "supertest": "^4.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }

@@ -1,17 +1,25 @@
-// const uuidv4 = require('uuid/v4');
-// console.log(uuidv4()); // ⇨ '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed'
 const basicResponse = {
   "0": "GET /news",
   "1": "GET /news?(country=|tag=|headline=|earliestdate=|latestdate="
 };
 
+const createThirdUser = {
+  username: `MaryJ`,
+  userType: `user`,
+  password: `asdfghjkl`,
+  email: `mjuser.email.com`,
+  commentActivity: {},
+  browseActivity: {}
+};
+
 const mockFirstUser = {
   userId: `bf6aa598-c9aa-40aa-a3a4-0984c2f1df80`,
-  userName: `JJ.Jameson`,
+  username: `JJJameson`,
   userType: `admin`,
+  password: `asdfghjkl`,
   email: `jjadmin.email.com`,
   currentlyActive: true,
-  lastActive: new Date(),
+  lastActive: (new Date()).toISOString(),
   commentActivity: {},
   browseActivity: {}
 };
@@ -20,12 +28,15 @@ const mockSecondUser = {
   userId: `d0a57e59-6c22-49e7-b604-24ab03c2cf32`,
   username: `Peter Parker`,
   userType: `superuser`,
+  password: `987654321`,
   email: `ppuser.email.com`,
   currentlyActive: true,
-  lastActive: new Date(),
+  lastActive: (new Date()).toISOString(),
   commentActivity: {},
   browseActivity: {}
 };
+
+const mockUserList = [mockFirstUser, mockSecondUser];
 
 const mockQuery = {
   country: "US",
@@ -38,7 +49,7 @@ const mockFirstCommentinFirstArticle = {
   id: `29b15e01-ac1c-4f4c-9d20-5501e942b648`,
   userId: `bf6aa598-c9aa-40aa-a3a4-0984c2f1df80`,
   title: "D.Trump visiting Daytona",
-  comment: `W.H.staff used old Daytona photos to fake the high attendance`,
+  comment: `W.H.staff used old Daytona photos to fake the high attendance`
 };
 
 const mockFirstArticle = {
@@ -167,6 +178,8 @@ module.exports = {
   basicResponse,
   mockFirstUser,
   mockSecondUser,
+  mockUserList,
+  createThirdUser,
   mockFirstCommentinFirstArticle,
   mockQuery,
   mockFirstArticle,
