@@ -1,0 +1,26 @@
+{
+  "name": "News_backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --watchAll",
+    "start:db" : "mongod --dbpath ~/Developer/mongodB/data/db",
+    "start": "nodemon src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "lorem-ipsum": "^2.0.3",
+    "mongoose": "^5.9.1",
+    "nodemon": "^2.0.2",
+    "uuid": "^3.4.0"
+  },
+  "devDependencies": {
+    "jest": "^25.1.0",
+    "mongodb-memory-server": "^6.2.4",
+    "supertest": "^4.0.2"
+  }
+}
