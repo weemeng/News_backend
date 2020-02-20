@@ -1,16 +1,12 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
-const { basicResponse } = require("./utils/initdata");
-const newsRouter = require("./routes/news.routes");
-const userRouter = require("./routes/users.routes");
-require("dotenv").config();
-
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
 const corsOption = {
   credentials: true,
-  allowedHeaders: "content-type",
+  // allowedHeaders: "content-type",
   origin: ["http://localhost:3000", "http://localhost:3001"]
 };
 app.use(cors(corsOption));
@@ -18,13 +14,16 @@ app.use(cookieParser("secret"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// const middleware = (req, res, next) => {
+//   console.log("reached here but cant get into user router")
+//   next();
+// }
 
-const middleware = (req, res, next) => {
-  console.log("reached here but cant get into user router")
-  next();
-}
+const { basicResponse } = require("./utils/initdata");
+const newsRouter = require("./routes/news.routes");
+const userRouter = require("./routes/users.routes");
 
-app.use("/news", middleware, newsRouter);
+app.use("/news", newsRouter);
 app.use("/user", userRouter);
 
 app.get("/", (req, res) => {

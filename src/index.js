@@ -22,10 +22,10 @@ const populateUserList = async user => {
   }
 };
 
-populateArticleList(mockArticleList).then(
-  console.log("populated the First article")
-);
-populateUserList(mockUserList).then(console.log("Lock and Load"));
+// populateArticleList(mockArticleList).then(
+//   console.log("populated the First article")
+// );
+// populateUserList(mockUserList).then(console.log("Lock and Load"));
 
 const server = app.listen(port, () => {
   console.log(`Server is now running at http://localhost:${port}`);

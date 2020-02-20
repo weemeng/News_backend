@@ -3,16 +3,17 @@ const mongoose = require("mongoose");
 const CommentSchema = new mongoose.Schema(
   {
     id: {
-        type: String,
-        unique: true,
-        required: true,
+      type: String,
+      unique: true,
+      sparse: true
     },
     userId: String,
     title: String,
     comment: String
   },
   {
-    timestamps: true
+    timestamps: true,
+    _id : false
   }
 );
 const CoordinateSchema = {
@@ -46,18 +47,21 @@ const PublisherSchema = {
 
 const NewsSchema = new mongoose.Schema({
   id: {
-      type: String,
-      required: true,
-      unique: true,
+    type: String,
+    required: true,
+    unique: true
   },
   title: String,
   location: LocationSchema,
   tag: Array,
   publisher: PublisherSchema,
-  comments: [CommentSchema],
+  comments: {
+    type: [CommentSchema],
+    default: undefined
+  },
   url: String,
   urlToImage: String,
-  description: String,
+  description: String
 });
 
 const NewsModel = mongoose.model("newsModel", NewsSchema);
