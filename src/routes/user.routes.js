@@ -37,9 +37,11 @@ router.post(
 
 router.post("/newUser", async (req, res, next) => {
   try {
+    //need to add ID into the user
     const user = new UserModel(req.body);
     await UserModel.init();
     user.userId = getUUID();
+    user.userType = "user"
     await user.save();
     res.status(201).send(user.toObject());
   } catch (err) {
