@@ -1,6 +1,16 @@
 const basicResponse = {
-  "0": "GET /news",
-  "1": "GET /news?(country=|tag=|headline=|earliestdate=|latestdate="
+  0: `GET / get all paths`,
+  1: `GET /news articles in the database`,
+  2: `GET /news?country=XX returns news from country in XX ISO format`,
+  3: `GET /news?earliestDate=XXXXXX returns news after earliest date`,
+  4: `GET /news?latestDate=XXXXXX returns news before latest date`,
+  5: `GET /news/:id/comments returns comments for that particular news`,
+  6: `POST /news/:id/comments allows post for comments for news if user is logged in`,
+  7: `POST /user/newUser allows addition of one user`,
+  8: `POST /user/login allows login when password is correct`,
+  9: `POST /user/login should not login when password is wrong`,
+  10: `GET /user should respond with user data of user that is logged in`,
+  11: `PATCH /user should respond with updated user data if user is logged in.`,
 };
 
 const createThirdUser = {
