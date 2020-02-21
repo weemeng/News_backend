@@ -9,7 +9,7 @@
     "jestuser": "jest --watch -t user",
     "test:coverage": "jest --coverage",
     "start:db": "mongod --dbpath ~/Developer/mongodB/data/db",
-    "start": "nodemon src/index.js"
+    "start": "node src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -17,8 +17,10 @@
   "dependencies": {
     "axios": "^0.19.2",
     "bcryptjs": "^2.4.3",
+    "cheerio": "^1.0.0-rc.3",
     "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
+    "country-in-text-detector": "^1.0.10",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
