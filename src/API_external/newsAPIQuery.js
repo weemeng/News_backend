@@ -6,7 +6,7 @@ const QueryParam = {
   category: "",
   q: "trump",
   qInTitle: "",
-  pageSize: 5,
+  pageSize: 20,
   earliestDate: Date(),
   latestDate: Date(),
   apiKey: process.env.NEWSAPI_SECRET_KEY
@@ -31,7 +31,7 @@ const setQueryStringEverythingEndpoint = query => {
     queryString.push(`language=${query.language}`);
   }
   if (!!query.pageSize) {
-    queryString.push(`pageSize=${query.pageSize}`);
+    queryString.push(`pageSize=20`);
   }
   queryString.push(`apiKey=${process.env.NEWSAPI_SECRET_KEY}`);
   return baseString + queryString.join("&");
@@ -60,7 +60,7 @@ const setQueryStringHeadlinesEndpoint = query => {
     queryString.push(`language=${query.language}`);
   }
   if (!!query.pageSize) {
-    queryString.push(`pageSize=${query.pageSize}`);
+    queryString.push(`pageSize=20`);
   }
   queryString.push(`apiKey=${process.env.NEWSAPI_SECRET_KEY}`);
   return baseString + queryString.join("&");

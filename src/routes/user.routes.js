@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const UserModel = require("../model/user.model");
-const generateId = require("../../generateId");
+const {getUUID, getArticleIDMD5} = require("../utils/generateId");
 const { protectRoute } = require("../middleware/auth");
 const wrapAsync = require("../utils/wrapAsync");
 const {
@@ -39,7 +39,7 @@ router.post("/newUser", async (req, res, next) => {
   try {
     const user = new UserModel(req.body);
     await UserModel.init();
-    user.userId = generateId();
+    user.userId = getUUID();
     await user.save();
     res.status(201).send(user.toObject());
   } catch (err) {

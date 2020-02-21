@@ -27,8 +27,12 @@ const processTopicsMashable = async htmlString => {
   return tagCollection;
 };
 const processTopicsStraitsTimes = async htmlString => {
-  const $ = await restStringAndReturn(htmlString);
+  if (!htmlString) {
+    return;
+  }
+  const $ = await cheerio.load(htmlString);
   const marketData = $(".story-keywords > ul > li > a");
+//   console.log(marketData[0].children[0].data);
   const tagCollection = [];
   for (let i = 0; i < marketData.length; i++) {
     tagCollection.push(marketData[i].children[0].data);

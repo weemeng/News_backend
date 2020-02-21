@@ -4,6 +4,7 @@ const app = require("./app");
 require("./utils/db");
 const NewsModel = require("./model/news.model");
 const UserModel = require("./model/user.model");
+require("./model/query.model")
 const { mockUserList, mockArticleList } = require("./utils/initdata");
 
 const populateArticleList = async article => {

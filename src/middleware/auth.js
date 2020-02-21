@@ -3,9 +3,6 @@ const { getJWTSecret } = require("../config/jwt");
 
 const protectRoute = (req, res, next) => {
   try {
-    // console.log("cookies = ", req.cookies)
-    // console.log("signedCookies = ", req.signedCookies)
-    // console.log("secret = ", req.secret)
     if (!req.cookies.token) {
       throw new Error("You are not authorized");
     }

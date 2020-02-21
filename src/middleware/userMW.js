@@ -1,4 +1,6 @@
 const UserModel = require("../model/user.model");
+const jwt = require("jsonwebtoken");
+const { getJWTSecret } = require("../config/jwt");
 
 const setLastActive = async (req, res, next) => {
   if (req.user) {
@@ -26,4 +28,15 @@ const toggleCurrentlyActive = async (req, res, next) => {
   next();
 };
 
-module.exports = { setLastActive, toggleCurrentlyActive };
+const checkLoginSetUser = (req, res, next) => {
+  if (req.cookies.token) {
+    try {
+      req.user = jwt.verify(req.cookies.token, getJWTSecret());
+    } catch (err) {
+      throw new Error("You Cookie Stealer!");
+    }
+  }
+  next();
+};
+
+module.exports = { setLastActive, toggleCurrentlyActive, checkLoginSetUser };

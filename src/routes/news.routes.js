@@ -1,34 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const NewsModel = require("../model/news.model");
-const { getUUID, getArticleIDMD5 } = require("../../generateId");
+const QueryModel = require("../model/query.model");
+const { getUUID, getArticleIDMD5 } = require("../utils/generateId");
 const { protectRoute } = require("../middleware/auth");
-const { setLastActive } = require("../middleware/userMW");
+const { setLastActive, checkLoginSetUser } = require("../middleware/userMW");
 const { parseQuery } = require("../API_external/newsAPIQuery");
 const axios = require("axios");
-
-router.get("/:id/comments", async (req, res) => {
-  const commentsList = await NewsModel.find({
-    id: req.params.id,
-    comments: {}
-  });
-  res.status(200).send(commentsList);
-});
-
-router.post("/:id/comments", protectRoute, setLastActive, async (req, res) => {
-  console.log(req.user);
-  const filterId = { id: req.params.id };
-  const newComment = req.body;
-  newComment["id"] = await getArticleIDMD5();
-  const [newsOfId] = await NewsModel.find(filterId);
-  newsOfId.comments.push(newComment);
-  const updatedNews = await NewsModel.findOneAndUpdate(
-    filterId,
-    { comments: newsOfId.comments },
-    { new: true, runValidators: true }
-  );
-  res.status(201).send(updatedNews.comments);
-});
+const {
+  processTopicsMashable,
+  processTopicsBBC,
+  processTopicsStraitsTimes,
+  processTopicsTechCrunch
+} = require("../config/tags");
 
 const setDBSearchFilter = requestQuery => {
   const filter = {};
@@ -83,25 +67,49 @@ const setAPISearchFilter = requestQuery => {
       const date = new Date(requestQuery.latestDate);
       filter["latestDate"] = date;
     }
+    filter["pageSize"] = 20;
   }
   return filter;
 };
 
-// {
-//   source: { id: null, name: 'Lifehacker.com' },
-//   author: 'Josh Ocampo',
-//   title: "What You Need to Know About the Senate Vote on Trump's Impeachment",
-//   description: 'This week in politics, the
-// Iowa caucuses went off without a hitch and President Trump boasted that the economy is the “ best it has ever been ” during last night’s State of the Union address. Read more...',
-//   url: 'https://lifehacker.com/what-you-need-to-know-about-the-senate-vote-on-trumps-i-1841469583',
-//   urlToImage: 'https://i.kinja-img.com/gawker-media/image/upload/c_fill,f_auto,fl_progressive,g_center,h_675,pg_1,q_80,w_1200/kovtrsqd8rdsifm4t9r9.jpg',
-//   publishedAt: '2020-02-05T18:30:00Z',
-//   content: 'This week in politics, the Iowa caucuses went off without a hitch and President Trump boasted that the economy is the best it has ever been during last nights State of the Union address. \r\n' +
-//     'In other news from the upside-down, this afternoon, Trumps Senate impe… [+1891 chars]'
-// }
+router.get("/:id/comments", async (req, res) => {
+  const commentsList = await NewsModel.find({
+    id: req.params.id,
+    comments: {}
+  });
+  res.status(200).send(commentsList);
+});
 
-const getTags = async url => {
-  
+router.post("/:id/comments", protectRoute, setLastActive, async (req, res) => {
+  const filterId = { id: req.params.id };
+  const newComment = req.body;
+  newComment["id"] = await getArticleIDMD5(newComment.title);
+  const [newsOfId] = await NewsModel.find(filterId);
+  newsOfId.comments.push(newComment);
+  const updatedNews = await NewsModel.findOneAndUpdate(
+    filterId,
+    { comments: newsOfId.comments },
+    { new: true, runValidators: true }
+  );
+  res.status(201).send(updatedNews.comments);
+});
+
+const getTags = async (source, url) => {
+  switch (source) {
+    case "bbc news":
+      return processTopicsBBC(url);
+    case "mashable":
+      return processTopicsMashable(url);
+    case "straitstimes.com":
+      console.log("In Straits Times");
+      const arrayoutput = await processTopicsStraitsTimes(url);
+      console.log(arrayoutput);
+      return arrayoutput;
+    case "techcrunch":
+      return processTopicsTechCrunch(url);
+    default:
+    // console.log(`Sorry.. ${source} is not supported currently`);
+  }
 };
 
 const articleToNewDoc = (article, country) => {
@@ -115,6 +123,7 @@ const articleToNewDoc = (article, country) => {
       publishedAt: article.publishedAt,
       source: article.source
     },
+    tags: getTags(article.source.name.toLowerCase(), article.url),
     url: article.url,
     urlToImage: article.urlToImage,
     description: article.description
@@ -135,15 +144,20 @@ const populateNewArticles = async article => {
 };
 
 const parseArticlesIntoDB = async (articles, country) => {
-  articles.forEach(async article => {
-    const parsedArticle = articleToNewDoc(article, country);
-    await populateNewArticles(parsedArticle);
-  });
+  await Promise.all(
+    articles.map(async article => {
+      const parsedArticle = articleToNewDoc(article, country);
+      await populateNewArticles(parsedArticle);
+    })
+  );
   return articles;
 };
 
 const updateDatabase = async apiQuery => {
   const response = await axios.get(parseQuery(apiQuery));
+  if (!response.data) {
+    return;
+  }
   const { articles } = response.data;
   let countryVal = "";
   if (!!apiQuery.country) {
@@ -154,23 +168,23 @@ const updateDatabase = async apiQuery => {
   }
 };
 
-// router.get("/updateNews", async (req, res) => {
-//   const apiQuery = setAPISearchFilter(req.query);
-//   // const response = await axios.get(parseQuery(apiQuery));
-//   // const { articles } = response.data;
-//   // if (!!articles.length) {
-//   //   await parseArticlesIntoDB(articles);
-//   // }
-//   res.status(200).send(articles);
-// });
+router.get("/", checkLoginSetUser, async (req, res, next) => {
+  const query = new QueryModel(req.query);
+  await QueryModel.init();
+  if (!!req.user) {
+    query.userId = req.user.userId;
+  }
+  await query.save();
 
-router.get("/", async (req, res, next) => {
   const apiQuery = setAPISearchFilter(req.query);
+  // console.log(apiQuery);
   await updateDatabase(apiQuery);
   const dbQuery = setDBSearchFilter(req.query);
   const filteredArticles = await NewsModel.find(dbQuery)
     // .sort({ "publisher.publishedAt": -1 })
-    // .limit(50);
+    .limit(50);
+  // console.log(dbQuery)
+  // console.log(filteredArticles)
   res.status(200).send(filteredArticles);
 });
 

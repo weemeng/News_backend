@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const { basicResponse } = require("./utils/initdata");
 const newsRouter = require("./routes/news.routes");
-const userRouter = require("./routes/users.routes");
+const userRouter = require("./routes/user.routes");
 
 app.use("/news", newsRouter);
 app.use("/user", userRouter);
