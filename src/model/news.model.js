@@ -64,6 +64,7 @@ const NewsSchema = new mongoose.Schema({
   description: String
 });
 
+
 const NewsModel = mongoose.model("newsModel", NewsSchema);
 
 module.exports = NewsModel;

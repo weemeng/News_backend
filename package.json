@@ -9,7 +9,7 @@
     "jestuser": "jest --watch -t user",
     "test:coverage": "jest --coverage",
     "start:db": "mongod --dbpath ~/Developer/mongodB/data/db",
-    "start": "node src/index.js"
+    "start": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
