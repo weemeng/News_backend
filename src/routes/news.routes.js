@@ -170,9 +170,12 @@ router.get("/:id/comments", async (req, res) => {
 router.post("/:id/comments", protectRoute, setLastActive, async (req, res) => {
   const filterId = { id: req.params.id };
   const newComment = req.body;
-  newComment["id"] = await getArticleIDMD5(newComment.title);
+  newComment["id"] = getArticleIDMD5(newComment.title);
   newComment["userId"] = req.user.userId;
   const [newsOfId] = await NewsModel.find(filterId);
+  if (newsOfId.comments === undefined) {
+    newsOfId.comments = [];
+  }
   newsOfId.comments.push(newComment);
   const updatedNews = await NewsModel.findOneAndUpdate(
     filterId,
