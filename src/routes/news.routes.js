@@ -23,12 +23,14 @@ const setDBSearchFilter = requestQuery => {
     }
     if (!!requestQuery.tag) {
       const guardTag = String(requestQuery.tag);
-      filter.title = {"$regex": guardTag, "$options": "i"};
-      filter.description = {"$regex": guardTag, "$options": "i"};
+      filter["$or"] = [
+        { title: { $regex: guardTag, $options: "i" } },
+        { description: { $regex: guardTag, $options: "i" } }
+      ];
     }
     if (!!requestQuery.headline) {
       const guardHeadline = String(requestQuery.headline);
-      filter.title = {"$regex": guardHeadline, "$options": "i"};
+      filter.title = { $regex: guardHeadline, $options: "i" };
     }
     if (!!requestQuery.earliestDate || !!requestQuery.latestDate) {
       const dateFilter = {};
@@ -74,8 +76,6 @@ const setAPISearchFilter = requestQuery => {
   return filter;
 };
 
-
-
 const getTags = async (source, url) => {
   switch (source) {
     // case "bbc news":
@@ -95,7 +95,7 @@ const getTags = async (source, url) => {
 
 const newArticleParsingToSchemaFormat = async (article, country) => {
   const taglist = await getTags(article.source.name.toLowerCase(), article.url);
-  const taglistLower = taglist.map(x => x.toLowerCase())
+  const taglistLower = taglist.map(x => x.toLowerCase());
   let newsObject = {
     id: getArticleIDMD5(article.title),
     title: article.title,
@@ -129,7 +129,10 @@ const populateNewArticles = async article => {
 const parseArticlesIntoDB = async (articles, country) => {
   await Promise.all(
     articles.map(async article => {
-      const parsedArticle = await newArticleParsingToSchemaFormat(article, country);
+      const parsedArticle = await newArticleParsingToSchemaFormat(
+        article,
+        country
+      );
       await populateNewArticles(parsedArticle);
     })
   );
@@ -188,6 +191,7 @@ router.get("/", checkLoginSetUser, async (req, res, next) => {
   const apiQuery = setAPISearchFilter(req.query);
   await updateDatabase(apiQuery);
   const dbQuery = setDBSearchFilter(req.query);
+  console.log(dbQuery);
   const filteredArticles = await NewsModel.find(dbQuery)
     .limit(50)
     .sort({ "publisher.publishedAt": -1 });
