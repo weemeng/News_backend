@@ -24,13 +24,11 @@ const setDBSearchFilter = requestQuery => {
     if (!!requestQuery.tag) {
       const guardTag = String(requestQuery.tag);
       filter.title = {"$regex": guardTag, "$options": "i"};
-      
-      // filter["tag"] = guardTag;
+      filter.description = {"$regex": guardTag, "$options": "i"};
     }
     if (!!requestQuery.headline) {
       const guardHeadline = String(requestQuery.headline);
-      filter.title = {"regex": guardHeadline};
-      // filter["title"] = guardHeadline;
+      filter.title = {"$regex": guardHeadline, "$options": "i"};
     }
     if (!!requestQuery.earliestDate || !!requestQuery.latestDate) {
       const dateFilter = {};
@@ -181,20 +179,18 @@ router.post("/:id/comments", protectRoute, setLastActive, async (req, res) => {
 });
 
 router.get("/", checkLoginSetUser, async (req, res, next) => {
-  // const query = new QueryModel(req.query);
-  // // await QueryModel.init();
-  // // if (!!req.user) {
-  // //   query.userId = req.user.userId;
-  // // }
-  // // await query.save();
-  // // const apiQuery = setAPISearchFilter(req.query);
-  // // await updateDatabase(apiQuery);
+  const query = new QueryModel(req.query);
+  await QueryModel.init();
+  if (!!req.user) {
+    query.userId = req.user.userId;
+  }
+  await query.save();
+  const apiQuery = setAPISearchFilter(req.query);
+  await updateDatabase(apiQuery);
   const dbQuery = setDBSearchFilter(req.query);
   const filteredArticles = await NewsModel.find(dbQuery)
     .limit(50)
     .sort({ "publisher.publishedAt": -1 });
-  // console.log(dbQuery)
-  // console.log(filteredArticles.length);
   res.status(200).send(filteredArticles);
 });
 
