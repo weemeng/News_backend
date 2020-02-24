@@ -35,7 +35,7 @@ router.post(
   }
 );
 
-router.post("/newUser", async (req, res, next) => {
+router.post("/newUser", wrapAsync(async (req, res, next) => {
   try {
     //need to add ID into the user
     const user = new UserModel(req.body);
@@ -47,7 +47,7 @@ router.post("/newUser", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
+}));
 
 router.get(
   "/signedcookies",

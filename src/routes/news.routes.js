@@ -7,6 +7,7 @@ const { protectRoute } = require("../middleware/auth");
 const { setLastActive, checkLoginSetUser } = require("../middleware/userMW");
 const { parseQuery } = require("../API_external/newsAPIQuery");
 const axios = require("axios");
+const wrapAsync = require("../utils/wrapAsync")
 const {
   processTopicsMashable,
   processTopicsBBC,
@@ -72,7 +73,6 @@ const setAPISearchFilter = requestQuery => {
     }
     filter["pageSize"] = 20;
   }
-  console.log(filter);
   return filter;
 };
 
@@ -155,19 +155,18 @@ const updateDatabase = async apiQuery => {
     }
   } catch (err) {
     console.log("Error Hit");
-    console.log(err);
   }
 };
 
-router.get("/:id/comments", async (req, res) => {
+router.get("/:id/comments", wrapAsync(async (req, res) => {
   const commentsList = await NewsModel.find({
     id: req.params.id,
     comments: {}
   });
   res.status(200).send(commentsList);
-});
+}));
 
-router.post("/:id/comments", protectRoute, setLastActive, async (req, res) => {
+router.post("/:id/comments", protectRoute, setLastActive, wrapAsync(async (req, res) => {
   const filterId = { id: req.params.id };
   const newComment = req.body;
   newComment["id"] = getArticleIDMD5(newComment.title);
@@ -183,9 +182,9 @@ router.post("/:id/comments", protectRoute, setLastActive, async (req, res) => {
     { new: true, runValidators: true }
   );
   res.status(201).send(updatedNews.comments);
-});
+}));
 
-router.get("/", checkLoginSetUser, async (req, res, next) => {
+router.get("/", checkLoginSetUser, wrapAsync(async (req, res, next) => {
   const query = new QueryModel(req.query);
   await QueryModel.init();
   if (!!req.user) {
@@ -195,11 +194,10 @@ router.get("/", checkLoginSetUser, async (req, res, next) => {
   const apiQuery = setAPISearchFilter(req.query);
   await updateDatabase(apiQuery);
   const dbQuery = setDBSearchFilter(req.query);
-  console.log(dbQuery);
   const filteredArticles = await NewsModel.find(dbQuery)
     .limit(50)
     .sort({ "publisher.publishedAt": -1 });
   res.status(200).send(filteredArticles);
-});
+}));
 
 module.exports = router;

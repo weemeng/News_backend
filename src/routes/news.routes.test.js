@@ -123,12 +123,6 @@ describe("app", () => {
         expect.objectContaining(mockComment)
       );
     });
-
-    // for testing purposes
-    // it.only("GET /news/updateNews should return News Updated with query", async () => {
-    //   const agent = request(app);
-    //   const response = await agent.get("/news/updateNews").expect(200);
-    //   expect(response.body).toEqual("News Updated");
-    // });
+    
   });
 });
