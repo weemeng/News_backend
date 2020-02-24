@@ -6,7 +6,7 @@ const cors = require("cors");
 
 const corsOption = {
   credentials: true,
-  origin: ["http://localhost:3000", "http://localhost:3001"]
+  origin: ["http://localhost:3000", "http://localhost:3001", "https://news-aggregator.netlify.com"],
 };
 app.use(cors(corsOption));
 app.use(cookieParser("secret"));
