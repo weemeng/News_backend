@@ -14,7 +14,13 @@ const QueryParamDefault = {
 
 const setQueryStringEverythingEndpoint = query => {
   const baseString = "https://newsapi.org/v2/everything?";
+  const queryFilterKey = ["q", "qInTitle", "from", "to", "language", "pageSize"]
   const queryString = [];
+  for (const keys in query) {
+    
+  }
+  
+  
   if (!!query.q) {
     queryString.push(`q=${query.q}`);
   }
@@ -36,13 +42,6 @@ const setQueryStringEverythingEndpoint = query => {
   queryString.push(`apiKey=${process.env.NEWSAPI_SECRET_KEY}`);
   return baseString + queryString.join("&");
 };
-// type1
-// q = keywords or phrases for the in article in the title or body
-// qInTitle = keywords or phrases to search for in the title
-// from  = ISO8601 FormData
-// to = ISO8601 FormData 2020-02-19 or 2020-02-19T10:45:31
-// language = [en, fr, es]
-// pageSize = 50;
 
 const setQueryStringHeadlinesEndpoint = query => {
   const baseString = "https://newsapi.org/v2/top-headlines?";
@@ -66,12 +65,6 @@ const setQueryStringHeadlinesEndpoint = query => {
   return baseString + queryString.join("&");
 };
 
-// type2
-// category = [business, entertainment, general, health, science, sports, technology];
-// language = [ar, de, en, es, fr, he, it, nl, no, pt, ru, se, ud, zh]
-// const countryList = ["ae", "ar", "at", "au", "be", "bg", "br", "ca", "ch", "cn", "co", "cu", "cz", "de"]
-// country = [ae ar at au be bg br ca ch cn co cu cz de eg fr gb gr hk hu id ie il in it jp kr lt lv ma mx my ng nl no nz ph pl pt ro rs ru sa se sg si sk th tr tw ua us ve za]
-
 const parseQuery = QueryParam => {
   let param = QueryParam
   if (Object.keys(param).length == 0) {
@@ -81,7 +74,5 @@ const parseQuery = QueryParam => {
     ? setQueryStringHeadlinesEndpoint(param)
     : setQueryStringEverythingEndpoint(param);
 };
-
-// console.log(parseQuery(QueryParamDefault));
 
 module.exports = { parseQuery, QueryParamDefault };

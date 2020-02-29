@@ -25,23 +25,17 @@ const UserSchema = new mongoose.Schema(
     },
     email: String,
     lastActive: Date,
-    currentlyActive: Boolean,
     commentActivity: Object,
     browseActivity: Object
   },
   { minimize: false }
 );
 
-// UserSchema.pre("save", async (next)=> {
-//   const rounds = 10;
-// console.log(this)
-//   this.password = await bcrypt.hash(this.password, rounds);
-//   next();
-// })
-
 UserSchema.pre("save", async function(next) {
-  const rounds = 10;
-  this.password = await bcrypt.hash(this.password, rounds);
+  if (this.isModified("password")) {
+    const rounds = 10;
+    this.password = await bcrypt.hash(this.password, rounds);
+  }
   next();
 });
 

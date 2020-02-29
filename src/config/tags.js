@@ -1,5 +1,5 @@
 const cheerio = require("cheerio");
-const wrapAsync = require("../utils/wrapAsync")
+const wrapAsync = require("../utils/wrapAsync");
 
 const restStringAndReturn = wrapAsync(async htmlString => {
   if (!htmlString) {
@@ -46,9 +46,20 @@ const processTopicsTechCrunch = wrapAsync(async htmlString => {
   });
   return tagCollection;
 });
-module.exports = {
-  processTopicsMashable,
-  processTopicsBBC,
-  processTopicsStraitsTimes,
-  processTopicsTechCrunch
+const getNewsTags = async (source, url) => {
+  switch (source) {
+    // case "bbc news":
+    //   return processTopicsBBC(data);
+    // case "mashable":
+    //   return processTopicsMashable(data);
+    case "straitstimes.com":
+      const { data } = await axios.get(url, { withCredentials: false });
+      return await processTopicsStraitsTimes(data);
+    // case "techcrunch":
+    //   return processTopicsTechCrunch(data);
+    default:
+      return [];
+    alert(`Sorry.. ${source} is not supported currently`);
+  }
 };
+module.exports = getNewsTags

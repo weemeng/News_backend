@@ -55,10 +55,10 @@ describe("user", () => {
       password: "asdfghjkl"
     };
     signedInAgent = request(app);
-    const {text: message} = await signedInAgent
-    .post("/user/login")
-    .send(loginUser)
-    .expect(200);
+    const { text: message } = await signedInAgent
+      .post("/user/login")
+      .send(loginUser)
+      .expect(200);
     // console.log(response.text)
     expect(message).toEqual("You are now logged in!");
   });
@@ -79,8 +79,7 @@ describe("user", () => {
       userId: `bf6aa598-c9aa-40aa-a3a4-0984c2f1df80`,
       username: `JJJameson`,
       userType: `admin`,
-      email: `jjadmin.email.com`,
-      currentlyActive: true
+      email: `jjadmin.email.com`
     };
     jwt.verify.mockReturnValueOnce({ userId: expectedUser.userId });
     signedInAgent = request(app);
@@ -96,13 +95,12 @@ describe("user", () => {
       userId: `bf6aa598-c9aa-40aa-a3a4-0984c2f1df80`,
       username: `JJJameson`,
       userType: `admin`,
-      email: `jjadmin.email.com`,
-      currentlyActive: true
+      email: `jjadmin.email.com`
     };
     const changeUsername = {
       username: "Brock",
       password: "1239891237"
-    }
+    };
     jwt.verify.mockReturnValueOnce({ userId: expectedUser.userId });
     signedInAgent = request(app);
     const { body: actualUser } = await signedInAgent
@@ -111,6 +109,6 @@ describe("user", () => {
       .set("Cookie", "token=valid-token")
       .expect(202); //202 accepted
     expect(jwt.verify).toHaveBeenCalled();
-    expect(actualUser).toHaveProperty('username', "Brock");
+    expect(actualUser).toHaveProperty("username", "Brock");
   });
 });

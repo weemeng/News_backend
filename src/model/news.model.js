@@ -5,7 +5,7 @@ const CommentSchema = new mongoose.Schema(
     id: {
       type: String,
       unique: true,
-      sparse: true
+      sparse: true // check
     },
     userId: String,
     title: String,

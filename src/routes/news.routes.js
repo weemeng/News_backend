@@ -2,46 +2,40 @@ const express = require("express");
 const router = express.Router();
 const NewsModel = require("../model/news.model");
 const QueryModel = require("../model/query.model");
-const { getUUID, getArticleIDMD5 } = require("../utils/generateId");
-const { protectRoute } = require("../middleware/auth");
-const { setLastActive, checkLoginSetUser } = require("../middleware/userMW");
+const { protectRoute } = require("../middleware/auth.mw");
+const {
+  updateUserLastActive,
+  checkLoginSetUser
+} = require("../middleware/user.mw");
 const { parseQuery } = require("../API_external/newsAPIQuery");
 const axios = require("axios");
-const wrapAsync = require("../utils/wrapAsync")
-const {
-  processTopicsMashable,
-  processTopicsBBC,
-  processTopicsStraitsTimes,
-  processTopicsTechCrunch
-} = require("../config/tags");
+const md5 = require("md5");
+const wrapAsync = require("../utils/wrapAsync");
+const getNewsTags = require("../config/tags");
 
 const setDBSearchFilter = requestQuery => {
   const filter = {};
   if (Object.entries(requestQuery).length !== 0) {
-    if (!!requestQuery.country) {
-      const guardCountry = String(requestQuery.country);
-      filter["location.country"] = guardCountry;
+    !!requestQuery.country
+      ? (filter["location.country"] = String(requestQuery.country))
+      : true;
+    if (!!requestQuery.headline) {
+      filter.title = { $regex: String(requestQuery.headline), $options: "i" };
     }
     if (!!requestQuery.tag) {
-      const guardTag = String(requestQuery.tag);
+      const requestTag = String(requestQuery.tag);
       filter["$or"] = [
-        { title: { $regex: guardTag, $options: "i" } },
-        { description: { $regex: guardTag, $options: "i" } }
+        { title: { $regex: requestTag, $options: "i" } },
+        { description: { $regex: requestTag, $options: "i" } }
       ];
-    }
-    if (!!requestQuery.headline) {
-      const guardHeadline = String(requestQuery.headline);
-      filter.title = { $regex: guardHeadline, $options: "i" };
     }
     if (!!requestQuery.earliestDate || !!requestQuery.latestDate) {
       const dateFilter = {};
       if (!!requestQuery.earliestDate) {
-        const date = new Date(requestQuery.earliestDate);
-        dateFilter["$gt"] = date;
+        dateFilter["$gt"] = new Date(requestQuery.earliestDate);
       }
       if (!!requestQuery.latestDate) {
-        const date = new Date(requestQuery.latestDate);
-        dateFilter["$lt"] = date;
+        dateFilter["$lt"] = new Date(requestQuery.latestDate);
       }
       filter["publisher.publishedAt"] = dateFilter;
     }
@@ -51,53 +45,36 @@ const setDBSearchFilter = requestQuery => {
 const setAPISearchFilter = requestQuery => {
   const filter = {};
   if (Object.entries(requestQuery).length !== 0) {
+    for (const keys in requestQuery) {
+    }
     if (!!requestQuery.country) {
-      const guardCountry = String(requestQuery.country);
-      filter["country"] = guardCountry;
+      filter["country"] = String(requestQuery.country);
     }
     if (!!requestQuery.tag) {
-      const guardTag = String(requestQuery.tag);
-      filter["q"] = guardTag;
+      filter["q"] = String(requestQuery.tag);
     }
     if (!!requestQuery.headline) {
-      const guardHeadline = String(requestQuery.headline);
-      filter["qInTitle"] = guardHeadline;
+      filter["qInTitle"] = String(requestQuery.headline);
     }
     if (!!requestQuery.earliestDate) {
-      const date = new Date(requestQuery.earliestDate);
-      filter["earliestDate"] = date;
+      filter["earliestDate"] = new Date(requestQuery.earliestDate);
     }
     if (!!requestQuery.latestDate) {
-      const date = new Date(requestQuery.latestDate);
-      filter["latestDate"] = date;
+      filter["latestDate"] = new Date(requestQuery.latestDate);
     }
     filter["pageSize"] = 20;
   }
   return filter;
 };
 
-const getTags = async (source, url) => {
-  switch (source) {
-    // case "bbc news":
-    //   return processTopicsBBC(data);
-    // case "mashable":
-    //   return processTopicsMashable(data);
-    case "straitstimes.com":
-      const { data } = await axios.get(url, { withCredentials: false });
-      return await processTopicsStraitsTimes(data);
-    // case "techcrunch":
-    //   return processTopicsTechCrunch(data);
-    default:
-      return [];
-    // console.log(`Sorry.. ${source} is not supported currently`);
-  }
-};
-
 const newArticleParsingToSchemaFormat = async (article, country) => {
-  const taglist = await getTags(article.source.name.toLowerCase(), article.url);
+  const taglist = await getNewsTags(
+    article.source.name.toLowerCase(),
+    article.url
+  );
   const taglistLower = taglist.map(x => x.toLowerCase());
   let newsObject = {
-    id: getArticleIDMD5(article.title),
+    id: md5(article.title),
     title: article.title,
     location: {
       country: country
@@ -114,90 +91,92 @@ const newArticleParsingToSchemaFormat = async (article, country) => {
   return newsObject;
 };
 
-const populateNewArticles = async article => {
-  try {
-    const art = new NewsModel(article);
-    await NewsModel.init();
-    await art.save();
-  } catch (err) {
-    if (err.code === 11000) {
-      console.log("Skipping... Entry is already in Database");
-    }
+const updateDatabase = async (req, res, next, apiQuery) => {
+  const response = await axios.get(parseQuery(apiQuery));
+  if (!response.data) {
+    return;
+  }
+  const { articles } = response.data;
+  let country = "";
+  if (!!apiQuery.country) {
+    country = apiQuery.country;
+  }
+  if (!!articles.length) {
+    await Promise.all(
+      articles.map(async article => {
+        const parsedArticle = await newArticleParsingToSchemaFormat(
+          article,
+          country
+        );
+        try {
+          const art = new NewsModel(parsedArticle);
+          await NewsModel.init();
+          await art.save();
+        } catch (err) {
+          if (err.code === 11000) {
+            console.log("Skipping... Entry is already in Database");
+          }
+        }
+      })
+    );
   }
 };
 
-const parseArticlesIntoDB = async (articles, country) => {
-  await Promise.all(
-    articles.map(async article => {
-      const parsedArticle = await newArticleParsingToSchemaFormat(
-        article,
-        country
-      );
-      await populateNewArticles(parsedArticle);
-    })
-  );
-  return articles;
-};
+router.get(
+  "/:id/comments",
+  wrapAsync(async (req, res) => {
+    const commentsList = await NewsModel.find({
+      id: req.params.id,
+      comments: {}
+    });
+    res.status(200).send(commentsList);
+  })
+);
 
-const updateDatabase = async apiQuery => {
-  try {
-    const response = await axios.get(parseQuery(apiQuery));
-    if (!response.data) {
-      return;
+router.post(
+  "/:id/comments",
+  protectRoute,
+  updateUserLastActive,
+  wrapAsync(async (req, res) => {
+    const filterId = { id: req.params.id };
+    const newComment = req.body;
+    newComment["id"] = md5(newComment.title);
+    newComment["userId"] = req.user.userId;
+    const [newsOfId] = await NewsModel.find(filterId);
+    if (newsOfId.comments === undefined) {
+      newsOfId.comments = [];
     }
-    const { articles } = response.data;
-    let countryVal = "";
-    if (!!apiQuery.country) {
-      countryVal = apiQuery.country;
+    newsOfId.comments.push(newComment);
+    const updatedNews = await NewsModel.findOneAndUpdate(
+      filterId,
+      { comments: newsOfId.comments },
+      { new: true, runValidators: true }
+    );
+    res.status(201).send(updatedNews.comments);
+  })
+);
+
+router.get(
+  "/",
+  checkLoginSetUser,
+  wrapAsync(async (req, res, next) => {
+    const query = new QueryModel(req.query);
+    await QueryModel.init();
+    if (!!req.user) {
+      query.userId = req.user.userId;
     }
-    if (!!articles.length) {
-      await parseArticlesIntoDB(articles, countryVal);
-    }
-  } catch (err) {
-    console.log("Error Hit");
-  }
-};
+    await query.save();
 
-router.get("/:id/comments", wrapAsync(async (req, res) => {
-  const commentsList = await NewsModel.find({
-    id: req.params.id,
-    comments: {}
-  });
-  res.status(200).send(commentsList);
-}));
+    const apiQuery = setAPISearchFilter(req.query);
+    await updateDatabase(req, res, next, apiQuery);
 
-router.post("/:id/comments", protectRoute, setLastActive, wrapAsync(async (req, res) => {
-  const filterId = { id: req.params.id };
-  const newComment = req.body;
-  newComment["id"] = getArticleIDMD5(newComment.title);
-  newComment["userId"] = req.user.userId;
-  const [newsOfId] = await NewsModel.find(filterId);
-  if (newsOfId.comments === undefined) {
-    newsOfId.comments = [];
-  }
-  newsOfId.comments.push(newComment);
-  const updatedNews = await NewsModel.findOneAndUpdate(
-    filterId,
-    { comments: newsOfId.comments },
-    { new: true, runValidators: true }
-  );
-  res.status(201).send(updatedNews.comments);
-}));
-
-router.get("/", checkLoginSetUser, wrapAsync(async (req, res, next) => {
-  const query = new QueryModel(req.query);
-  await QueryModel.init();
-  if (!!req.user) {
-    query.userId = req.user.userId;
-  }
-  await query.save();
-  const apiQuery = setAPISearchFilter(req.query);
-  await updateDatabase(apiQuery);
-  const dbQuery = setDBSearchFilter(req.query);
-  const filteredArticles = await NewsModel.find(dbQuery)
-    .limit(50)
-    .sort({ "publisher.publishedAt": -1 });
-  res.status(200).send(filteredArticles);
-}));
+    const dbQuery = setDBSearchFilter(req.query);
+    console.log(dbQuery);
+    const filteredArticles = await NewsModel.find(dbQuery)
+      .limit(50)
+      .sort({ "publisher.publishedAt": -1 });
+    res.status(200).send(filteredArticles);
+  })
+);
 
 module.exports = router;

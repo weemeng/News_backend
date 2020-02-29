@@ -60,30 +60,37 @@ describe("app", () => {
       axios.get.mockImplementationOnce(() => Promise.resolve({}));
       const agent = request(app);
       const { body: articleData } = await agent.get("/news").expect(200);
-      expect(articleData).toMatchObject(mockDBArticleList);
+      expect(articleData).toEqual(expect.arrayContaining([
+        expect.objectContaining(mockDBArticleList[0]),
+        expect.objectContaining(mockDBArticleList[1]),
+        expect.objectContaining(mockDBArticleList[2]),
+        expect.objectContaining(mockDBArticleList[3])
+      ]));
     });
     it("GET /news?q expect country=us", async () => {
       const expectedResponse = [mockDBArticleList[0], mockDBArticleList[1]];
       axios.get.mockImplementationOnce(() => Promise.resolve({}));
       const agent = request(app);
       const response = await agent.get("/news?country=us").expect(200);
-      expect(response.body).toMatchObject(expectedResponse);
+      expect(response.body).toEqual(expect.arrayContaining([
+        expect.objectContaining(mockDBArticleList[0]),
+        expect.objectContaining(mockDBArticleList[1]),
+      ]));
     });
     it("GET /news?q expect earliestDate=", async () => {
-      const expectedResponse = [
-        mockDBArticleList[1],
-        mockDBArticleList[2],
-        mockDBArticleList[3]
-      ];
       axios.get.mockImplementationOnce(() => Promise.resolve({}));
       const thisdate = new Date();
       thisdate.setMonth(1);
       thisdate.setDate(1);
       const agent = request(app);
       const response = await agent
-        .get(`/news?earliestDate=${thisdate.toISOString()}`)
-        .expect(200);
-      expect(response.body).toMatchObject(expectedResponse);
+      .get(`/news?earliestDate=${thisdate.toISOString()}`)
+      .expect(200);
+      expect(response.body).toEqual(expect.arrayContaining([
+        expect.objectContaining(mockDBArticleList[1]),
+        expect.objectContaining(mockDBArticleList[2]),
+        expect.objectContaining(mockDBArticleList[3])
+      ]));
     });
     it("GET /news?q expect latestDate=", async () => {
       axios.get.mockImplementationOnce(() => Promise.resolve({}));
@@ -95,8 +102,7 @@ describe("app", () => {
       const response = await agent
         .get(`/news?latestDate=${thisdate.toISOString()}`)
         .expect(200);
-      // "/news?(country=|tag=|headline=|earliestDate=|latestDate="
-      expect(response.body).toMatchObject([expectedResponse]);
+      expect(response.body).toEqual(expect.arrayContaining([expect.objectContaining(mockDBArticleList[0])]));
     });
     it("GET /news/:id/comments", async () => {
       const expectedResponse = mockDBArticleList[0];
@@ -122,7 +128,6 @@ describe("app", () => {
       expect(actualResponse[actualResponse.length - 1]).toEqual(
         expect.objectContaining(mockComment)
       );
-    });
-    
+    });    
   });
 });
