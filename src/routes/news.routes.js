@@ -16,29 +16,14 @@ const getNewsTags = require("../config/tags");
 const setDBSearchFilter = requestQuery => {
   const filter = {};
   if (Object.entries(requestQuery).length !== 0) {
-    !!requestQuery.country
-      ? (filter["location.country"] = String(requestQuery.country))
-      : true;
-    if (!!requestQuery.headline) {
-      filter.title = { $regex: String(requestQuery.headline), $options: "i" };
-    }
-    if (!!requestQuery.tag) {
-      const requestTag = String(requestQuery.tag);
-      filter["$or"] = [
-        { title: { $regex: requestTag, $options: "i" } },
-        { description: { $regex: requestTag, $options: "i" } }
-      ];
-    }
-    if (!!requestQuery.earliestDate || !!requestQuery.latestDate) {
-      const dateFilter = {};
-      if (!!requestQuery.earliestDate) {
-        dateFilter["$gt"] = new Date(requestQuery.earliestDate);
-      }
-      if (!!requestQuery.latestDate) {
-        dateFilter["$lt"] = new Date(requestQuery.latestDate);
-      }
-      filter["publisher.publishedAt"] = dateFilter;
-    }
+    !!requestQuery.country && (filter["location.country"] = String(requestQuery.country));
+    !!requestQuery.headline && (filter.title = { $regex: String(requestQuery.headline), $options: "i" });
+    !!requestQuery.q && (filter["$or"] = [
+        { title: { $regex: requestQuery.q, $options: "i" } },
+        { description: { $regex: requestQuery.q, $options: "i" } }
+      ]);
+    !!requestQuery.earliestDate && (filter["publisher.publishedAt.$gt"] = new Date(requestQuery.earliestDate));
+    !!requestQuery.latestDate && (filter["publisher.publishedAt.$lt"] = new Date(requestQuery.latestDate));
   }
   return filter;
 };
@@ -46,21 +31,10 @@ const setAPISearchFilter = requestQuery => {
   const filter = {};
   if (Object.entries(requestQuery).length !== 0) {
     for (const keys in requestQuery) {
-    }
-    if (!!requestQuery.country) {
-      filter["country"] = String(requestQuery.country);
-    }
-    if (!!requestQuery.tag) {
-      filter["q"] = String(requestQuery.tag);
-    }
-    if (!!requestQuery.headline) {
-      filter["qInTitle"] = String(requestQuery.headline);
-    }
-    if (!!requestQuery.earliestDate) {
-      filter["earliestDate"] = new Date(requestQuery.earliestDate);
-    }
-    if (!!requestQuery.latestDate) {
-      filter["latestDate"] = new Date(requestQuery.latestDate);
+      if (keys == "earliestDate" || keys == "latestDate") {
+        filter[keys] = new Date(requestQuery[keys]);
+      }
+      filter[keys] = requestQuery[keys];
     }
     filter["pageSize"] = 20;
   }
@@ -68,10 +42,11 @@ const setAPISearchFilter = requestQuery => {
 };
 
 const newArticleParsingToSchemaFormat = async (article, country) => {
-  const taglist = await getNewsTags(
-    article.source.name.toLowerCase(),
-    article.url
-  );
+  // const taglist = await getNewsTags(
+  //   article.source.name.toLowerCase(),
+  //   article.url
+  // );
+  const taglist = [];
   const taglistLower = taglist.map(x => x.toLowerCase());
   let newsObject = {
     id: md5(article.title),
@@ -166,12 +141,10 @@ router.get(
       query.userId = req.user.userId;
     }
     await query.save();
-
     const apiQuery = setAPISearchFilter(req.query);
+    console.log(apiQuery);
     await updateDatabase(req, res, next, apiQuery);
-
     const dbQuery = setDBSearchFilter(req.query);
-    console.log(dbQuery);
     const filteredArticles = await NewsModel.find(dbQuery)
       .limit(50)
       .sort({ "publisher.publishedAt": -1 });

@@ -3,5 +3,5 @@ node_modules
 src/designfiles/
 generateDate.js
 lorem.js
-converage
+converage/
 testingAxios.js

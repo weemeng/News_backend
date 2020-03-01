@@ -1,5 +1,6 @@
 const cheerio = require("cheerio");
 const wrapAsync = require("../utils/wrapAsync");
+const axios = require("axios")
 
 const restStringAndReturn = wrapAsync(async htmlString => {
   if (!htmlString) {
